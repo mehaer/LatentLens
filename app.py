@@ -7,9 +7,6 @@ import seaborn as sns
 from torchvision import datasets, transforms
 from PIL import Image
 
-# ---------------------------------------
-# 1️⃣  Model definition
-# ---------------------------------------
 class EmbeddingNet(nn.Module):
     def __init__(self, embedding_dim=2):
         super().__init__()
@@ -29,9 +26,6 @@ class EmbeddingNet(nn.Module):
         x = x.view(x.size(0), -1)
         return self.fc(x)
 
-# ---------------------------------------
-# 2️⃣  Load model + embeddings
-# ---------------------------------------
 @st.cache_resource
 def load_model():
     model = EmbeddingNet(embedding_dim=2)
@@ -59,10 +53,7 @@ def load_cifar10_images():
     dataset = datasets.CIFAR10(root="./data", train=False, download=True, transform=transform)
     return dataset
 
-# ---------------------------------------
-# 3️⃣  Setup
-# ---------------------------------------
-st.title("🧠 CIFAR-10 Contrastive Embedding Explorer + Image Upload")
+st.title("LatentLens")
 
 model = load_model()
 embeddings, labels = load_embeddings()
@@ -73,10 +64,8 @@ label_map = {
     5: "dog", 6: "frog", 7: "horse", 8: "ship", 9: "truck"
 }
 
-# ---------------------------------------
-# 4️⃣  Visualization filters
-# ---------------------------------------
-st.sidebar.header("🎛 Filters")
+
+st.sidebar.header("Filters")
 class_names = [label_map[i] for i in sorted(set(labels))]
 selected_classes = st.sidebar.multiselect("Select classes:", class_names, default=class_names)
 selected_indices = [k for k, v in label_map.items() if v in selected_classes]
@@ -84,9 +73,7 @@ mask = np.isin(labels, selected_indices)
 embeddings = embeddings[mask]
 labels = labels[mask]
 
-# ---------------------------------------
-# 5️⃣  Plot base embeddings
-# ---------------------------------------
+
 fig, ax = plt.subplots(figsize=(7, 6))
 palette = sns.color_palette("tab10", len(label_map))
 
@@ -100,10 +87,7 @@ for idx in selected_indices:
         color=palette[idx]
     )
 
-# ---------------------------------------
-# 6️⃣  Image upload and embedding projection
-# ---------------------------------------
-st.subheader("📤 Upload Your Own Image")
+st.subheader(" Upload Your Own Image")
 
 uploaded_file = st.file_uploader("Upload an image (CIFAR-like)", type=["jpg", "png", "jpeg"])
 if uploaded_file is not None:
@@ -128,7 +112,7 @@ if uploaded_file is not None:
     dists = np.linalg.norm(embeddings - user_emb, axis=1)
     nearest_indices = np.argsort(dists)[:5]
 
-    st.write("### 🔍 5 Nearest CIFAR-10 Images:")
+    st.write("5 Nearest CIFAR-10 Images:")
     cols = st.columns(5)
     for i, idx in enumerate(nearest_indices):
         img_tensor, lbl = dataset[idx]
@@ -136,12 +120,7 @@ if uploaded_file is not None:
         with cols[i]:
             st.image(img_np, caption=label_map[int(lbl)], width=80)
 
-# ---------------------------------------
-# 7️⃣  Show final plot
-# ---------------------------------------
 ax.set_title("2D Embeddings After Contrastive Training", fontsize=14)
 ax.legend(markerscale=2, fontsize=8, loc="best", frameon=False)
 st.pyplot(fig)
 
-st.markdown("---")
-st.caption("Built with ❤️ using PyTorch + Streamlit | by [Your Name]")
